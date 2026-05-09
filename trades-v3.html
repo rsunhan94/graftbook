@@ -655,7 +655,7 @@ input[type="date"].form-input{color-scheme:dark;}
     </div>
     <div class="form-row"><div class="form-group"><label class="form-label">Address</label><input class="form-input" id="s-address" oninput="saveSettings()" placeholder="123 Main St, Anytown, CA 90210"></div></div>
     <div class="form-row c2">
-      <div class="form-group"><label class="form-label">Invoice Prefix</label><input class="form-input" id="s-prefix" oninput="saveSettings()" placeholder="INV"></div>
+      <div class="form-group"><label class="form-label">Invoice Prefix</label><input class="form-input" id="s-prefix" oninput="saveSettings();showPrefixWarning()" placeholder="INV"><div id="s-prefix-warning" style="display:none;font-size:11px;color:var(--muted);margin-top:5px;line-height:1.5;">Changing the prefix only applies to new invoices. Past invoices will keep their original prefix.</div></div>
       <div class="form-group"><label class="form-label">Currency</label>
         <select class="form-select" id="s-currency" onchange="saveSettings()">
           <option value="USD">USD — US Dollar ($)</option>
@@ -1124,19 +1124,16 @@ function getInvs()     { return S('invs') || []; }
 function getCfg()      { return S('cfg') || {name:'My Business',owner:'',phone:'',email:'',address:'',prefix:'INV',currency:'USD',defaultLr:'',defaultTax:'',defaultMarkup:''}; }
 
 function nextJID() {
-  const ns = getJobs().map(j=>parseInt(j.did?.replace('#JO-','')||0)).filter(Boolean);
-  return '#JO-'+String((ns.length?Math.max(...ns):0)+1).padStart(4,'0');
+  const ns = getJobs().map(j=>parseInt(j.did?.replace('JOB-','')||0)).filter(Boolean);
+  return 'JOB-'+String((ns.length?Math.max(...ns):0)+1).padStart(4,'0');
 }
-function nextQID() {
-  const ns = getQuotes().map(q=>parseInt(q.did?.split('-').pop()||0)).filter(Boolean);
-  const c2 = getCfg();
-  return 'QUO-'+String((ns.length?Math.max(...ns):0)+1).padStart(4,'0');
+function nextQID(jobDid) {
+  return 'QUO-'+jobDid.replace('JOB-','');
 }
 function getQuotes()   { return S('quotes') || []; }
-function nextIID() {
-  const ns = getInvs().map(i=>parseInt(i.did?.split('-').pop()||0)).filter(Boolean);
-  const c = getCfg();
-  return (c.prefix||'INV')+'-'+String((ns.length?Math.max(...ns):0)+1).padStart(4,'0');
+function nextIID(jobDid) {
+  const cfg=getCfg();
+  return (cfg.prefix||'INV')+'-'+jobDid.replace('JOB-','');
 }
 
 
@@ -1531,7 +1528,7 @@ function openInvModalWithOverrides(j){
   const markup=j._invMarkup||0;
   const notes=j._invNotes||'';
   const labC=hours*lr; const matC=pcost*(1+markup/100); const sub=labC+matC; const taxA=sub*tr/100; const total=sub+taxA;
-  const did=nextIID();
+  const did=nextIID(j.did||null);
   const d=new Date().toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
   document.getElementById('inv-preview').innerHTML=buildInvHTML(cfg,j.customer,j.phone||'',j.email||'',j.address||'',j.jobType||'',j.task,notes,hours,lr,pcost,markup,tr,sub,taxA,total,did,d,'unpaid');
   _pendInv={id:uid(),did,jobId:j.id,jobDid:j.did,customer:j.customer,email:j.email||'',address:j.address||'',jobType:j.jobType||'',task:j.task,hours,pcost,markup:markup||0,lr,tr,sub,tax:taxA,total,notes,status:'unpaid',date:Date.now(),created:Date.now()};
@@ -2445,7 +2442,7 @@ function createQuoteFromModal(){
       markDirty('quotes',quotes[existingIdx].id);
     } else {
       const qt={
-        id:uid(), did:nextQID(),
+        id:uid(), did:nextQID(j.did||null),
         jobId:j.id, jobDid:j.did,
         address:j.address||'', jobType:j.jobType||'general',
         customer:j.customer, phone:j.phone||'', email:j.email||'',
@@ -2853,6 +2850,12 @@ function renderIncome(){
 }
 
 // ══ SETTINGS ══
+let _originalPrefix='INV';
+function showPrefixWarning(){
+  const el=document.getElementById('s-prefix-warning');
+  const current=document.getElementById('s-prefix').value.trim()||'INV';
+  if(el) el.style.display=current!==_originalPrefix?'':'none';
+}
 function loadSettings(){
   const c=getCfg();
   document.getElementById('s-name').value=c.name||'';
@@ -2861,6 +2864,8 @@ function loadSettings(){
   document.getElementById('s-email').value=c.email||'';
   document.getElementById('s-address').value=c.address||'';
   document.getElementById('s-prefix').value=c.prefix||'INV';
+  _originalPrefix=c.prefix||'INV';
+  document.getElementById('s-prefix-warning').style.display='';
   document.getElementById('s-currency').value=c.currency||'USD';
   document.getElementById('s-lr').value=c.defaultLr||'';
   const _sMarkup=document.getElementById('s-markup');if(_sMarkup)_sMarkup.value=c.defaultMarkup||'';
