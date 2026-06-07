@@ -95,7 +95,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(13,15,15,.9)
 .pricing-btn:hover{background:#2070e0;}
 
 /* COMPARE */
-.compare-row{display:flex;justify-content:space-between;align-items:center;padding:14px 0;border-bottom:1px solid var(--border);font-size:12px;}
+.compare-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;align-items:center;padding:14px 0;border-bottom:1px solid var(--border);font-size:12px;}
 .compare-row:last-child{border-bottom:none;}
 .compare-label{color:var(--muted);}
 .compare-them{color:var(--red);font-weight:700;}
@@ -301,41 +301,41 @@ footer{background:var(--surface);border-top:1px solid var(--border);padding:40px
 <!-- COMPARE -->
 <section class="section" id="compare">
   <div class="section-tag">vs. the competition</div>
-  <div class="section-title">5x cheaper.<br>Zero complexity.</div>
+  <div class="section-title">4x cheaper.<br>Zero complexity.</div>
   <div style="max-width:640px;margin:0 auto;">
     <div class="compare-head">
       <span></span>
-      <span style="text-align:center;">Jobber / Housecall</span>
+      <span style="text-align:right;">The Competition</span>
       <span style="text-align:right;color:var(--accent);">GraftBook</span>
     </div>
     <div class="compare-row">
       <span class="compare-label">Monthly cost (solo)</span>
-      <span class="compare-them">$39–$199/mo</span>
+      <span class="compare-them" style="text-align:right;">$39–$199/mo</span>
       <span class="compare-us" style="text-align:right;">$9.99/mo</span>
     </div>
     <div class="compare-row">
       <span class="compare-label">Free trial</span>
-      <span class="compare-them">14 days (card required)</span>
+      <span class="compare-them" style="text-align:right;">14 days (card required)</span>
       <span class="compare-us" style="text-align:right;">7 days, no card</span>
     </div>
     <div class="compare-row">
       <span class="compare-label">Setup time</span>
-      <span class="compare-them">Hours of onboarding</span>
+      <span class="compare-them" style="text-align:right;">Hours of onboarding</span>
       <span class="compare-us" style="text-align:right;">Under 2 minutes</span>
     </div>
     <div class="compare-row">
       <span class="compare-label">Works offline</span>
-      <span class="compare-them">Limited or no</span>
+      <span class="compare-them" style="text-align:right;">Limited or no</span>
       <span class="compare-us" style="text-align:right;">Full offline support</span>
     </div>
     <div class="compare-row">
       <span class="compare-label">Materials markup</span>
-      <span class="compare-them">Higher tier only</span>
+      <span class="compare-them" style="text-align:right;">Higher tier only</span>
       <span class="compare-us" style="text-align:right;">Included</span>
     </div>
     <div class="compare-row">
       <span class="compare-label">Hidden fees</span>
-      <span class="compare-them">Add-ons, per-user fees</span>
+      <span class="compare-them" style="text-align:right;">Add-ons, per-user fees</span>
       <span class="compare-us" style="text-align:right;">None</span>
     </div>
   </div>
