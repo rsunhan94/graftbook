@@ -27,7 +27,7 @@
 *{margin:0;padding:0;box-sizing:border-box;}
 html,body{height:100%;overflow:hidden;}
 body{background:var(--bg);color:var(--text);font-family:'JetBrains Mono',monospace;display:flex;flex-direction:column;}
-.shell{display:grid;grid-template-columns:68px 1fr;height:100vh;overflow:hidden;}
+.shell{display:grid;grid-template-columns:68px 1fr;height:100vh;overflow:hidden;padding-top:env(safe-area-inset-top);}
 /* SIDEBAR */
 .sidebar{background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;align-items:center;padding:16px 0 12px;gap:2px;}
 .logo{width:42px;height:42px;background:var(--accent);display:flex;align-items:center;justify-content:center;margin-bottom:20px;flex-shrink:0;}
@@ -3610,10 +3610,10 @@ function updateTrialBanner(days){
   const urgencyBg=days<=1?'rgba(239,68,68,.15)':days<=3?'rgba(249,115,22,.15)':'var(--accent-dim)';
   const urgencyBorder=days<=1?'#ef4444':days<=3?'#f97316':'var(--accent)';
   const urgencyColor=days<=1?'#ef4444':days<=3?'#f97316':'var(--accent)';
-  el.style.cssText=`position:fixed;top:0;left:0;right:0;z-index:500;background:${urgencyBg};border-bottom:2px solid ${urgencyBorder};padding:12px 16px;text-align:center;cursor:pointer;line-height:1.5;`;
+  el.style.cssText=`position:fixed;top:env(safe-area-inset-top);left:0;right:0;z-index:500;background:${urgencyBg};border-bottom:2px solid ${urgencyBorder};padding:12px 16px;text-align:center;cursor:pointer;line-height:1.5;`;
   el.innerHTML=`<div style="font-size:13px;font-weight:700;letter-spacing:1px;color:${urgencyColor};">${urgency} ${days} day${days===1?'':'s'} left in your free trial</div><div style="font-size:11px;color:${urgencyColor};opacity:.85;margin-top:2px;letter-spacing:.5px;">TAP HERE TO SUBSCRIBE FOR FULL ACCESS →</div>`;
   const shell=document.getElementById('main-shell');
-  if(shell) shell.style.paddingTop='56px';
+  if(shell) shell.style.paddingTop='calc(56px + env(safe-area-inset-top))';
 }
 function hideTrialBanner(){
   const el=document.getElementById('trial-banner');
