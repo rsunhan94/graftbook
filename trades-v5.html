@@ -576,8 +576,8 @@ input[type="date"].form-input{color-scheme:dark;}
         <div id="sort-menu" style="display:none;position:absolute;right:0;top:calc(100% + 4px);background:var(--card);border:1px solid var(--border2);z-index:50;min-width:180px;">
           <button class="sort-opt" data-sort="added-new"  onclick="applySort('added-new')">↓ Added (Newest)</button>
           <button class="sort-opt" data-sort="added-old"  onclick="applySort('added-old')">↑ Added (Oldest)</button>
-          <button class="sort-opt" data-sort="done-new"   onclick="applySort('done-new')">↓ Completed (Newest)</button>
-          <button class="sort-opt" data-sort="done-old"   onclick="applySort('done-old')">↑ Completed (Oldest)</button>
+          <button class="sort-opt" data-sort="done-new"   onclick="applySort('done-new')">↓ By Date (Newest)</button>
+          <button class="sort-opt" data-sort="done-old"   onclick="applySort('done-old')">↑ By Date (Oldest)</button>
         </div>
       </div>
     </div>
@@ -797,8 +797,8 @@ input[type="date"].form-input{color-scheme:dark;}
         </select>
       </div>
     </div>
-    <div class="form-row" id="j-date-row" style="display:none;">
-      <div class="form-group"><label class="form-label">Job Completed On</label><input class="form-input" id="j-date" type="date"></div>
+    <div class="form-row" id="j-date-row">
+      <div class="form-group"><label class="form-label">Job Date</label><input class="form-input" id="j-date" type="date"></div>
     </div>
     <div id="j-estimate-fields" style="display:none;">
       <div class="form-row c2">
@@ -1212,7 +1212,7 @@ function showView(name) {
   document.querySelectorAll('.nav').forEach(n=>n.classList.remove('active'));
   document.getElementById('view-'+name).classList.add('active');
   document.querySelector(`[data-view="${name}"]`).classList.add('active');
-  ({dashboard:renderDashboard,jobs:()=>{renderJobs();renderJobStats();},quotes:()=>{renderQuotes();renderQuoteStats();},invoices:()=>{renderInvs();renderInvStats();},income:renderIncome,settings:()=>{loadSettings();addSignOutToSettings();}})[name]?.();
+  ({dashboard:renderDashboard,jobs:()=>{jf='all';document.querySelectorAll('[data-jf]').forEach(b=>b.classList.toggle('active',b.dataset.jf==='all'));const _js=document.getElementById('job-search');if(_js)_js.value='';renderJobs();renderJobStats();},quotes:()=>{qf='all';document.querySelectorAll('[data-qf]').forEach(b=>b.classList.toggle('active',b.dataset.qf==='all'));const _qs=document.getElementById('quote-search');if(_qs)_qs.value='';renderQuotes();renderQuoteStats();},invoices:()=>{invF='all';document.querySelectorAll('[data-invf]').forEach(b=>b.classList.toggle('active',b.dataset.invf==='all'));const _is=document.getElementById('inv-search');if(_is)_is.value='';renderInvs();renderInvStats();},income:renderIncome,settings:()=>{loadSettings();addSignOutToSettings();}})[name]?.();
 }
 
 // ══ JOBS ══
@@ -1235,7 +1235,7 @@ function applySort(key){
   if(jobSort===key){ jobSort='default'; btn.textContent='↕ Sort'; btn.classList.remove('active'); }
   else {
     jobSort=key;
-    const labels={'added-new':'↓ Added (Newest)','added-old':'↑ Added (Oldest)','done-new':'↓ Completed (Newest)','done-old':'↑ Completed (Oldest)'};
+    const labels={'added-new':'↓ Added (Newest)','added-old':'↑ Added (Oldest)','done-new':'↓ By Date (Newest)','done-old':'↑ By Date (Oldest)'};
     btn.textContent=labels[key]||'↕ Sort';
     btn.classList.add('active');
   }
@@ -1403,7 +1403,7 @@ function openEditJobModal(id){
   const _jqmk=document.getElementById('jq-markup');if(_jqmk)_jqmk.value=_jqcfg.defaultMarkup||'0';
   const _jqtax=document.getElementById('jq-tax');if(_jqtax)_jqtax.value=_jqcfg.defaultTax||'0';
   const _jqprev=document.getElementById('jq-preview');if(_jqprev)_jqprev.style.display='none';
-    document.getElementById('j-date-row').style.display='none';
+    document.getElementById('j-date-row').style.display='';
     document.getElementById('j-waiting-row').style.display='none';
     document.getElementById('j-status-row').style.display='none';
     // Use linked invoice total as source of truth for paid amount
@@ -1435,7 +1435,7 @@ function openEditJobModal(id){
     document.getElementById('j-quotesent-box').style.display = _noQuoteStatuses.includes(j.status)?'none':'';
     if(!_noQuoteStatuses.includes(j.status)) updateQuoteBoxForJob(j.id);
     document.getElementById('j-done-invoice-box').style.display = j.status==='done'?'':'none';
-    document.getElementById('j-date-row').style.display = j.status==='done'?'':'none';
+    document.getElementById('j-date-row').style.display='';
     document.getElementById('j-waiting-row').style.display = j.status==='waiting'?'':'none';
     document.getElementById('j-estimate-fields').style.display = 'none';
     document.getElementById('j-inv-form').style.display='none';
@@ -1454,7 +1454,7 @@ function updateStatusUI(){
   document.getElementById('j-estimate-fields').style.display = 'none';
   document.getElementById('j-estimate-box').style.display = 'none';
   // Show/hide date field (only for completed)
-  document.getElementById('j-date-row').style.display = isDone ? '' : 'none';
+  document.getElementById('j-date-row').style.display='';
   document.getElementById('j-waiting-row').style.display = isWaiting ? '' : 'none';
   // Show/hide quote creation box — hidden for invoiced/paid jobs
   const quoteBox = document.getElementById('j-quotesent-box');
@@ -1675,9 +1675,11 @@ function deleteJobFromModal(){
   if(!j)return;
   const idToDelete=ej;
   const linkedInv=getInvs().find(i=>i.jobId===ej);
+  const linkedQuote=getQuotes().find(q=>q.jobId===ej);
   const invWarning=linkedInv?` This job has an invoice (${linkedInv.did}) which will also be permanently deleted.`:'';
+  const quoteWarning=linkedQuote?` This job has a quote (${linkedQuote.did}) which will also be permanently deleted.`:'';
   closeModal('modal-job');
-  confirmAction('DELETE JOB',`Delete ${j.did} — ${j.address||j.customer} for ${j.customer}?${invWarning} This cannot be undone.`,()=>deleteJob(idToDelete));
+  confirmAction('DELETE JOB',`Delete ${j.did} — ${j.address||j.customer} for ${j.customer}?${quoteWarning}${invWarning} This cannot be undone.`,()=>deleteJob(idToDelete));
 }
 function deleteJob(id){
   const linkedInv=getInvs().find(i=>i.jobId===id);
@@ -2414,6 +2416,10 @@ function viewExistingQuote(){
 function expandQuoteForm(){
   document.getElementById('j-add-quote-collapsed').style.display='none';
   document.getElementById('j-quote-form').style.display='';
+  const _cfg=getCfg();
+  const _mk=document.getElementById('jq-markup');if(_mk&&!_mk.value)_mk.value=_cfg.defaultMarkup||'0';
+  const _tx=document.getElementById('jq-tax');if(_tx&&!_tx.value)_tx.value=_cfg.defaultTax||'0';
+  const _lr=document.getElementById('jq-lr');if(_lr&&!_lr.value)_lr.value=_cfg.defaultLr||'';
 }
 
 function collapseQuoteForm(){
@@ -2773,8 +2779,8 @@ async function printQuote(){
       doc.setLineWidth(0.2);y+=12;
       doc.setDrawColor(200,200,200);doc.line(lm,y,rm,y);y+=6;
       doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(120,120,120);
-      const validity=(qt.expiry?'This quote is valid until '+new Date(qt.expiry).toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})+'. ':'')+' Prices subject to change if scope changes.';
-      doc.text(validity+' Prices subject to change if scope changes.',lm+(pw/2),y,{align:'center'});
+      const validity=(qt.expiry?'This quote is valid until '+new Date(qt.expiry).toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})+'. ':'')+'Prices subject to change if scope changes.';
+      doc.text(validity,lm+(pw/2),y,{align:'center'});
 
       if(isCapacitor){
         const b64=doc.output('datauristring').split(',')[1];
@@ -2818,10 +2824,11 @@ function emailQuote(){
 }
 function deleteQuoteFromView(){
   const qt=getQuotes().find(q=>q.id===_viewQuoteId);if(!qt)return;
+  const idToDelete=_viewQuoteId;
   confirmAction('DELETE QUOTE',`Delete ${qt.did} for ${esc(qt.customer)}? This cannot be undone.`,()=>{
-    const quotes=getQuotes().filter(q=>q.id!==_viewQuoteId);
+    const quotes=getQuotes().filter(q=>q.id!==idToDelete);
     W('quotes',quotes);
-    markDirtyDeleted('quotes',_viewQuoteId);
+    markDirtyDeleted('quotes',idToDelete);
     scheduleSyncToServer();
     closeModal('modal-quote-view');
     renderQuotes();renderQuoteStats();renderJobs();renderDashboard();
@@ -2971,21 +2978,14 @@ const _statusLabels={inprogress:'In Progress',waiting:'Waiting Parts',done:'Comp
 function exportJobsCSV(){
   const jobs=getJobs();
   if(!jobs.length){toast('No jobs to export.','error');return;}
-  const headers=['Job #','Job Type','Address','Customer','Phone','Email','Work Description','Status','Job Completed On','Est. Labour Hours','Est. Labour Rate','Est. Materials Cost','Est. Tax Rate','Est. Total','Waiting Parts Notes','Notes','Date Added'];
-  const rows=[headers,...jobs.map(j=>{
-    const estLabour=(j.hours||0)*(j.lr||0);
-    const estSub=estLabour+(j.pcost||0);
-    const estTotal=estSub+(estSub*(j.tax||0)/100);
-    return [
-      j.did, j.jobType||'general', j.address||'',
-      j.customer, j.phone, j.email, j.task, _statusLabels[j.status]||j.status,
-      toDisplayDate(j.jobDate||''),
-      j.hours||0, j.lr||0, j.pcost||0, j.tax||0,
-      estTotal.toFixed(2),
-      j.waitingNotes||'', j.notes||'',
-      j.created?new Date(j.created).toLocaleDateString('en-US'):'',
-    ];
-  })];
+  const headers=['Job #','Job Type','Address','Customer','Phone','Email','Work Description','Status','Job Date','Waiting Parts Notes','Notes','Date Added'];
+  const rows=[headers,...jobs.map(j=>[
+    j.did, j.jobType||'general', j.address||'',
+    j.customer, j.phone, j.email, j.task, _statusLabels[j.status]||j.status,
+    toDisplayDate(j.jobDate||''),
+    j.waitingNotes||'', j.notes||'',
+    j.created?new Date(j.created).toLocaleDateString('en-US'):'',
+  ])];
   downloadCSV('graftbook-jobs.csv', rows);
   toast('Jobs exported!','success');
 }
@@ -3040,22 +3040,25 @@ async function clearAllData(){
   const invs=getInvs();
   const quotes=getQuotes();
   let hasError=false;
+  const isDelErr=r=>r.error&&!r.error.startsWith('fetch_failed')&&r.status!==404;
   try{
-    for(const j of jobs){
-      const r=await apiCall('DELETE','/jobs/'+j.id);
-      if(r.error&&!r.error.startsWith('fetch_failed')){hasError=true;}
+  // Delete child records first (quotes and invoices reference jobs via FK), jobs last
+    for(const q of quotes){
+      const r=await apiCall('DELETE','/quotes/'+q.id);
+      if(isDelErr(r)){console.error('Clear quotes error:',r.error,r.status);hasError=true;}
     }
     for(const i of invs){
       const r=await apiCall('DELETE','/invoices/'+i.id);
-      if(r.error&&!r.error.startsWith('fetch_failed')){hasError=true;}
+      if(isDelErr(r)){console.error('Clear invs error:',r.error,r.status);hasError=true;}
     }
-    for(const q of quotes){
-      const r=await apiCall('DELETE','/quotes/'+q.id);
-      if(r.error&&!r.error.startsWith('fetch_failed')){hasError=true;}
+    for(const j of jobs){
+      const r=await apiCall('DELETE','/jobs/'+j.id);
+      if(isDelErr(r)){console.error('Clear jobs error:',r.error,r.status);hasError=true;}
     }
     const r=await apiCall('DELETE','/config');
-    if(r.error&&!r.error.startsWith('fetch_failed')){hasError=true;}
+    if(isDelErr(r)){console.error('Clear config error:',r.error,r.status);hasError=true;}
   }catch(e){
+    console.error('Clear all data exception:',e);
     hasError=true;
   }
   if(hasError){
